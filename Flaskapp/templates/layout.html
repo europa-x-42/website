@@ -1,0 +1,76 @@
+<html lang="en">
+	<head>
+		<meta name="viewport" content = "width=device-width, initial-scale=1.0">
+		<title>Europa X</title>
+
+		<meta name="description" content="Great quality sex shop with great prices.">
+
+		<link rel="shortcut icon" href="/static/favicon.ico">
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+		<link href="/static/css/sticky-footer.css" rel="stylesheet">
+
+		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+		<style>
+		body{
+			background-color: #f0f0f0;
+		}
+		</style>
+	</head>
+	<body>
+		{% if admin %}
+		<nav class="navbar navbar-expand-lg navbar-light bg-success sticky-top">
+		{% else %}
+		<nav class="navbar navbar-expand-lg navbar-light bg-primary sticky-top">
+		{% endif %}
+		  <a class="navbar-brand">Europa X</a>
+		  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		  </button>
+
+		  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+			<ul class="navbar-nav mr-auto">
+			  <li class="nav-item active">
+				<a class="nav-link" href="/">Home</a>
+			  </li>
+			  <li class="nav-item active">
+				<a class="nav-link" href="/catalog/?page=1&catid=-1&sortby=dateD&hidesold=false">Catalog</a>
+			  </li>
+			  <li class="nav-item active">
+				<a class="nav-link" href="/onlineshop/?page=1&catid=-1&sortby=dateD&hidesold=false">Online Shop</a>
+			  </li>
+			  {% if admin %}
+				  <li class="nav-item active">
+					<a class="nav-link" href="/admin/">Admin</a>
+				  </li>
+			  {% endif %}
+			  {% if username==None or admin %}
+				  <li class="nav-item active">
+					<a class="nav-link" href="/signin/">Sign In</a>
+				  </li>
+				  <li class="nav-item active">
+					<a class="nav-link" href="/signup/">Sign Up</a>
+				  </li>
+			  {% endif %}
+			  {% if username!=None %}
+				  <li class="nav-item active">
+					<a class="nav-link" href="/signout/">Sign Out</a>
+				  </li>
+				  <li class="nav-item active">
+					  <a class="nav-link" href="/account/">Account: {{ username }}</a>
+				  </li>
+			  {% endif %}
+			</ul>
+		  </div>
+		</nav>
+		<div class="container-fluid">
+			{% block body %}
+			{% endblock %}
+		</div>
+		<footer class="footer">
+			<div class="container-fluid">
+				<a class="text-body" href="/copyright/">&copy;</a> Bonjour Gunaydin SPRL
+			</div>
+		</footer>
+	</body>
+</html>

@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<link rel="stylesheet" href="/static/css/signin.css">
+
+<form class="form-signin" action="/{#confirm#}signup/" method="POST">
+  <h1 class="h3 mb-3 font-weight-normal">Sign Up</h1>
+  <label for="inputUsername" class="sr-only">Username</label>
+  <input type="username" name="username" id="inputUsername" class="form-control" placeholder="Username" required autofocus>
+  <label for="inputEmail" class="sr-only">Email address</label>
+  <input type="email" name="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
+  <label for="inputPassword" class="sr-only">Password</label>
+  <input type="password" name="password" id="inputPassword" class="form-control" placeholder="Password" required>
+  <label for="inputPassword" class="sr-only">Confirm Password</label>
+  <input type="password" name="confirmpassword" id="inputPassword" class="form-control" placeholder="Confirm Password" required>
+  <div class="checkbox mb-3">
+	<label>
+		<input type="checkbox" name="checkbox" value="conditionsAccepted" required> I have read and accept the <a{# href="/terms/"#}>general terms &amp; conditions.</a>
+	</label>
+  </div>
+  {% if admin %}
+  <div class="checkbox mb-3">
+	<label>
+	  <input type="checkbox" name="admincheckbox" value="makeAdmin"> Make Admin.
+	</label>
+  </div>
+  {% endif %}
+  <div class="checkbox mb-3">
+	<label>
+	  <input type="checkbox" name="signincheckbox" value="signInImmediately" checked> Sign In Immediately.
+	</label>
+  </div>
+  <button class="btn btn-lg btn-primary btn-block" type="submit">Sign up</button>
+</form>
+{% if error==True %}
+<center class="text-danger">{{ errorMessage }}</center>
+{% endif %}
+
+{% endblock %}
