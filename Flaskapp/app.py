@@ -99,6 +99,28 @@ def onlineShopPage():
         resp.set_cookie("sessionToken",request.cookies.get("sessionToken"),max_age=60*60*2)
     return resp
 
+@app.route("/admin/",methods=["GET"])
+def adminPage():
+    user=updateUser(request)
+    resp=make_response(render_template("admin.html",username=user[0],admin=user[1]))
+    resp.set_cookie("lastPathVisited","/admin/")
+    if user[0]==None:
+        resp.set_cookie("sessionToken","xxx",expires=0)
+    else:
+        resp.set_cookie("sessionToken",request.cookies.get("sessionToken"),max_age=60*60*2)
+    return resp
+
+@app.route("/account/",methods=["GET"])
+def accountPage():
+    user=updateUser(request)
+    resp=make_response(render_template("account.html",username=user[0],admin=user[1]))
+    resp.set_cookie("lastPathVisited","/account/")
+    if user[0]==None:
+        resp.set_cookie("sessionToken","xxx",expires=0)
+    else:
+        resp.set_cookie("sessionToken",request.cookies.get("sessionToken"),max_age=60*60*2)
+    return resp
+
 @app.route("/signin/",methods=["GET"])
 def signInPage():
     user=updateUser(request)
