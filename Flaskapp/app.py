@@ -16,7 +16,7 @@ DEBUG=False
 DATABASE="europax" if PROD else "europax-dev" #TODO verify actual database name for production
 DBPASSWORD="WVhwbGNHOXA="
 
-LOGFILE="dev.log" #TODO verify name for production
+LOGFILE="/home/adrian/Documents/projects/europax/"+("europax.log" if PROD else "europax-dev.log") #TODO verify name for production
 
 log.basicConfig(level=log.INFO,format="%(asctime)s::%(levelname)s::%(message)s",
         handlers=[log.StreamHandler(),log.FileHandler(LOGFILE)])
