@@ -267,7 +267,7 @@ def updateUser(request):
     timeLimit=time.time()-60*60*2
     for token in sessionTokens:
         if sessionTokens[token][2]<timeLimit:
-            log.info("Timed Out: "+sessionTokens[token])
+            log.info("Timed Out: "+str(sessionTokens[token]))
             del userTokens[sessionTokens[token][0]]
             del sessionTokens[token]
     log.info("Signed In: "+str(list(sessionTokens.values())))
