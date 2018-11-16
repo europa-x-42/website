@@ -217,7 +217,7 @@ def signUp():
                     if username in userTokens:
                         del sessionTokens[userTokens[username]]
                     token=genToken()
-                    sessionTokens[token]=[username,isAdmin,False,time.time()]
+                    sessionTokens[token]=[username,isAdmin,time.time()]
                     userTokens[username]=token
                     resp=make_response(redirect(request.cookies.get("lastPathVisited") if "lastPathVisited" in request.cookies else "/"))
                     resp.set_cookie("sessionToken",token)
