@@ -265,7 +265,7 @@ def signOut():
 def updateUser(request):
     sessionToken=request.cookies.get("sessionToken")
     timeLimit=time.time()-60*60*2
-    tokens=sessionTokens.keys()
+    tokens=list(sessionTokens.keys())
     for token in tokens:
         if sessionTokens[token][2]<timeLimit:
             log.info("Timed Out: "+str(sessionTokens[token]))
