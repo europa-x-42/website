@@ -196,7 +196,7 @@ def signUp():
         log.info("Sign Up Attempt")
         log.info("Username: "+username)
         log.info("Email: "+email)
-        log.info("Password: "+password)
+        log.info("Password: *****")
         log.info("Is Admin: "+str(isAdmin))
         password=hashPassword(password,username)
         if "checkbox" in request.form:
@@ -209,7 +209,7 @@ def signUp():
             if len(res)==0:
                 log.info("Sign Up Successful")
                 try:
-                    db.execute("INSERT INTO Users (username,email,password,description,isVendor,isAdmin) VALUES (%s,%s,%s,'',False,%s)",(username,email,password,isAdmin))
+                    db.execute("INSERT INTO Users (username,email,password,isAdmin) VALUES (%s,%s,%s,%s)",(username,email,password,isAdmin))
                     conn.commit()
                 except:
                     conn.rollback()
