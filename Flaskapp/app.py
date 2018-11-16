@@ -124,7 +124,9 @@ def accountPage():
 @app.route("/signin/",methods=["GET"])
 def signInPage():
     user=updateUser(request)
-    resp=make_response(render_template("signin.html",username=user[0],admin=user[1]))
+    error="error" in request.args
+    errorMessage=request.args["error"] if error else ""
+    resp=make_response(render_template("signin.html",username=user[0],admin=user[1],error=error,errorMessage=errorMessage))
     resp.set_cookie("lastPathVisited","/signin/")
     if user[0]==None:
         resp.set_cookie("sessionToken","xxx",expires=0)
@@ -148,17 +150,14 @@ def signIn():
         log.info("Sign In Successful")
         if username in userTokens:
             del sessionTokens[userTokens[username]]
-        token=hex(random.randint(1000000000,1000000000000000))[2:]
-        while token in sessionTokens:
-            token=hex(random.randint(1000000000,1000000000000000))[2:]
+        token=genToken()
         sessionTokens[token]=[username,res[0][0],time.time()]
         userTokens[username]=token
         resp=make_response(redirect(request.cookies.get("lastPathVisited") if "lastPathVisited" in request.cookies else "/"))
         resp.set_cookie("sessionToken",token,max_age=60*60*24)
         return resp
     log.info("Sign In Failed")
-    #resp=make_response(redirect("/signin/Error: The combination of username and password that you have provided is wrong./"))
-    resp=make_response(redirect("/signin/"))
+    resp=make_response(redirect("/signin/?error=Error: The combination of username and password that you have provided is wrong."))
     if user[0]==None:
         resp.set_cookie("sessionToken","xxx",expires=0)
     else:
@@ -168,8 +167,84 @@ def signIn():
 @app.route("/signup/",methods=["GET"])
 def signUpPage():
     user=updateUser(request)
-    resp=make_response(render_template("signup.html",username=user[0],admin=user[1]))
+    error="error" in request.args
+    errorMessage=request.args["error"] if error else ""
+    resp=make_response(render_template("signup.html",username=user[0],admin=user[1],error=error,errorMessage=errorMessage))
     resp.set_cookie("lastPathVisited","/signup/")
+    if user[0]==None:
+        resp.set_cookie("sessionToken","xxx",expires=0)
+    else:
+        resp.set_cookie("sessionToken",request.cookies.get("sessionToken"),max_age=60*60*2)
+    return resp
+
+@app.route("/confirmsignup/",methods=["POST"])
+def signUp():
+    user=updateUser(request)
+    username=request.form["username"]
+    email=request.form["email"]
+    password=request.form["password"]
+    confirmpassword=request.form["confirmpassword"]
+    if not all([c in "azertyuiopqsdfghjklmwxcvbnAZERTYUIOPQSDFGHJKLMWXCVBN1234567890&é(è!çà)-_$@#[]{}ù%µ|" for c in username]):
+        resp=make_response(redirect("/signup/?error=Error: You have used a prohibited character in the username."))
+        if user[0]==None:
+            resp.set_cookie("sessionToken","xxx",expires=0)
+        else:
+            resp.set_cookie("sessionToken",request.cookies.get("sessionToken"),max_age=60*60*2)
+        return resp
+    if password==confirmpassword:
+        isAdmin="admincheckbox" in request.form and user[1]
+        log.info("Sign Up Attempt")
+        log.info("Username: "+username)
+        log.info("Email: "+email)
+        log.info("Password: "+password)
+        log.info("Is Admin: "+str(isAdmin))
+        password=hashPassword(password,username)
+        if "checkbox" in request.form:
+            try:
+                db.execute("SELECT username, email FROM users WHERE username = %s or email = %s",(username,email))
+                res=db.fetchall()
+            except:
+                conn.rollback()
+                res=[]
+            if len(res)==0:
+                log.info("Sign Up Successful")
+                try:
+                    db.execute("INSERT INTO Users (username,email,password,description,isVendor,isAdmin) VALUES (%s,%s,%s,'',False,%s)",(username,email,password,isAdmin))
+                    conn.commit()
+                except:
+                    conn.rollback()
+                if "signincheckbox" in request.form:
+                    if username in userTokens:
+                        del sessionTokens[userTokens[username]]
+                    token=genToken()
+                    sessionTokens[token]=[username,isAdmin,False,time.time()]
+                    userTokens[username]=token
+                    resp=make_response(redirect(request.cookies.get("lastPathVisited") if "lastPathVisited" in request.cookies else "/"))
+                    resp.set_cookie("sessionToken",token)
+                    return resp
+                resp=make_response(redirect(request.cookies.get("lastPathVisited") if "lastPathVisited" in request.cookies else "/"))
+                return resp
+            log.info("Sign Up Failed")
+            if username in [entry[0] for entry in res]:
+                resp=make_response(redirect("/signup/?error=Error: This username is already being used."))
+                if user[0]==None:
+                    resp.set_cookie("sessionToken","xxx",expires=0)
+                else:
+                    resp.set_cookie("sessionToken",request.cookies.get("sessionToken"),max_age=60*60*2)
+                return resp
+            resp=make_response(redirect("/signup/?error=Error: This email is already being used."))
+            if user[0]==None:
+                resp.set_cookie("sessionToken","xxx",expires=0)
+            else:
+                resp.set_cookie("sessionToken",request.cookies.get("sessionToken"),max_age=60*60*2)
+            return resp
+        resp=make_response(redirect("/signup/?error=Error: You have not accepted the general terms and conditions."))
+        if user[0]==None:
+            resp.set_cookie("sessionToken","xxx",expires=0)
+        else:
+            resp.set_cookie("sessionToken",request.cookies.get("sessionToken"),max_age=60*60*2)
+        return resp
+    resp=make_response(redirect("/signup/?error=Error: You have entered two different passwords."))
     if user[0]==None:
         resp.set_cookie("sessionToken","xxx",expires=0)
     else:
@@ -209,6 +284,12 @@ def hashPassword(password,username):
     password=hashlib.pbkdf2_hmac('sha256',bytes(password,"UTF-8"),bytes(salt,"UTF-8"),100000)
     password=str(binascii.hexlify(password),"UTF-8")
     return password
+
+def genToken():
+    token=hex(random.randint(1000000000,1000000000000000))[2:]
+    while token in sessionTokens:
+        token=hex(random.randint(1000000000,1000000000000000))[2:]
+    return token
 
 if __name__=="__main__":
     try:
