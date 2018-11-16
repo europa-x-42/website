@@ -2,7 +2,6 @@
 
 from typing import Optional,Dict
 
-import sqlite3
 import psycopg2 #type:ignore
 import logging as log
 import sys,base64,hashlib,random,binascii,time,datetime,smtplib
@@ -14,8 +13,8 @@ PROD=not DEV
 
 DEBUG=False
 
-DATABASE="europax" #TODO verify actual database name for production
-DBPASSWORD="<password>" #TODO insert base64(base64(password)). use password other than 'europaxPassword'
+DATABASE="europax" if PROD else "europax-dev" #TODO verify actual database name for production
+DBPASSWORD="WVhwbGNHOXA="
 
 LOGFILE="dev.log" #TODO verify name for production
 
@@ -28,38 +27,18 @@ sessionTokens:Dict[str,list]={}
 userTokens:Dict[str,str]={}
 
 try:
-    if PROD:
-        conn:Optional[sqlite3.Connection]=psycopg2.connect("dbname='"+DATABASE+"' user='postgres' host='localhost' password='"+str(base64.b64decode(base64.b64decode(b'"+DBPASSWORD+"')),"UTF-8")+"'")
-    else:
-        conn=sqlite3.connect(":memory:") #NOTE sqlite3 is only used for dev
-
+    conn=psycopg2.connect("dbname='"+DATABASE+"' user='postgres' host='localhost' password='"+\
+            str(base64.b64decode(base64.b64decode(bytes(DBPASSWORD,"UTF-8"))),"UTF-8")+"'")
     if conn is not None:
-        db:Optional[sqlite3.Cursor]=conn.cursor()
-
-    ##### SQLITE 3 DATABASE INITIALISATION #####
-    if DEV:
-        if db is not None and conn is not None:
-            try:
-                db.execute("CREATE TABLE Users (username TEXT,email TEXT,password TEXT,isAdmin BOOLEAN);")
-                conn.commit()
-                #Add default admin account
-                db.execute("INSERT INTO Users (username,email,password,isAdmin) VALUES ('admin','europax@yopmail.com',"
-                           "'553b262eeda3ff58ffe4ad6c29ae354860f4a5a1f697b949638565fca3b00e4e',"
-                           "True);") #NOTE dev password: 'europaxPassword'
-                conn.commit()
-            except:
-                conn.rollback()
-                db.close()
-                db=None
-                conn.close()
-                conn=None
-    ############################################
-
+        db=conn.cursor()
+    else:
+        db=None
 except:
     conn=None
     db=None
 
 if db is None or conn is None:
+    log.error("connection to database failed")
     sys.exit(1)
 
 username=None
@@ -152,7 +131,6 @@ def signIn():
             token=hex(random.randint(1000000000,1000000000000000))[2:]
         sessionTokens[token]=[username,res[0][0],time.time()]
         userTokens[username]=token
-        log.info("Signed In: "+str(list(sessionTokens.values())))
         resp=make_response(redirect(request.cookies.get("lastPathVisited") if "lastPathVisited" in request.cookies else "/"))
         resp.set_cookie("sessionToken",token,max_age=60*60*24)
         return resp
@@ -192,13 +170,10 @@ def updateUser(request):
     timeLimit=time.time()-60*60*2
     for token in sessionTokens:
         if sessionTokens[token][2]<timeLimit:
-            print()
-            print("Timed Out:",sessionTokens[token])
-            print()
+            log.info("Timed Out: "+sessionTokens[token])
             del userTokens[sessionTokens[token][0]]
             del sessionTokens[token]
-    print("Signed In:",str(list(sessionTokens.values())))
-    print()
+    log.info("Signed In: "+str(list(sessionTokens.values())))
     if sessionToken in sessionTokens:
         sessionTokens[sessionToken][2]=time.time()
         return sessionTokens[sessionToken]
