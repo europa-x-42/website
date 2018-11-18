@@ -62,7 +62,23 @@ def indexPage():
 @app.route("/catalog/",methods=["GET"])
 def catalogPage():
     user=updateUser(request)
-    resp=make_response(render_template("catalog.html",username=user[0],admin=user[1]))
+    try:
+        db.execute("SELECT name,description,catID,price,imageURL FROM Catalog;")
+        res=db.fetchall()
+    except:
+        conn.rollback()
+        res=[]
+    items=[list(item) for item in res]
+    try:
+        db.execute("SELECT catID,name FROM Categories;")
+        res=db.fetchall()
+    except:
+        conn.rollback()
+        res=[]
+    cats=dict(res)
+    for item in items:
+        item[2]=cats[item[2]] if item[2] in cats else "Unclassified"
+    resp=make_response(render_template("catalog.html",username=user[0],admin=user[1],items=items))
     resp.set_cookie("lastPathVisited","/catalog/")
     if user[0]==None:
         resp.set_cookie("sessionToken","xxx",expires=0)
